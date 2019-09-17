@@ -9,25 +9,35 @@
 <div class="card card-drfault">
     <div class="card-header">Categories</div>
     <div class="card-body">
-        <table class="table">
-            <thead>
-                <th>Name</th>
-                <th></th>
-            </thead>
-
-            <tbody>
-                @foreach($categories as $categorie)
-                    <tr>
-                        <td>
-                            {{$categorie->name }}
-                        </td>
-                        <td>
-                        <a href="{{ route('categories.edit',$categorie->id )}}" class="btn btn-info">Edit</a>
-                        <button class="btn btn-danger" onclick="handleDelete({{$categorie->id}})">Delete</button>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @if ($categories->count()>0)
+            <table class="table">
+                    <thead>
+                        <th>Name</th>
+                        <th>Posts Count</th>
+                        <th></th>
+                    </thead>
+        
+                    <tbody>
+                        @foreach($categories as $categorie)
+                            <tr>
+                        
+                                <td>
+                                    {{$categorie->name }}
+                                </td>
+                                <td>
+                                    {{ $categorie->posts->count() }}
+                                </td>
+                                <td>
+                                <a href="{{ route('categories.edit',$categorie->id )}}" class="btn btn-info">Edit</a>
+                                <button class="btn btn-danger" onclick="handleDelete({{$categorie->id}})">Delete</button>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+        @else
+            <h3 class="text-center">No categories yet</h3>
+        @endif
+       
 
         <form id="deleteCategoryForm" method="POST">
             @csrf

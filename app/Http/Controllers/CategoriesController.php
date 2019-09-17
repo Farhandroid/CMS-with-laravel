@@ -84,6 +84,7 @@ class CategoriesController extends Controller
         $category->save();
         session()->flash('success','Category Updated successfully');
         return redirect(route('categories.index'));
+        ///return redirect()->back();
     }
 
     /**

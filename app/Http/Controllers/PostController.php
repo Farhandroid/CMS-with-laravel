@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Posts\CreatePostRequest;
+use App\Http\Requests\posts\UpdatePostRequest;
 use App\Post;
+use App\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+ 
 
 class PostController extends Controller
 {
@@ -25,7 +29,7 @@ class PostController extends Controller
      */
     public function create()
     {
-        return view('posts.create');
+        return view('posts.create')->with('categories',Category::all());
     }
 
     /**
@@ -44,6 +48,8 @@ class PostController extends Controller
         $post->description=$data['description'];
         $post->content=$data['content'];
         $post->image=$image;
+        $post->published_at=$data['published_at'];
+        $post->category_id=$data['category']; /*because in create.blade,php category is dropdown menu . Whose id is category*/
         $post->save();
         session()->flash('success','Post Created successfully');
         return redirect(route('posts.index'));
@@ -66,9 +72,9 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Post $post)
     {
-        //
+        return view('posts.create')->with('post',$post)->with('categories',Category::all());
     }
 
     /**
@@ -78,9 +84,24 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdatePostRequest $request, Post $post)
     {
-        //
+        $data=$request->only(['title','description','published_at','content']);
+        if($request->hasFile('image'))
+        {
+            $image= $request->image->store('posts');
+            Storage::delete($post->image);
+            $post->image=$image;
+            $post->forceDelete();
+        }
+        $post->title=$data['title'];
+        $post->description=$data['description'];
+        $post->content=$data['content'];
+        $post->published_at=$data['published_at'];
+        $post->category_id=$data['category'];
+        $post->save();
+        session()->flash('success','Post Updated succesfully successfully');
+        return redirect(route('posts.index'));
     }
 
     /**
@@ -91,6 +112,34 @@ class PostController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $post=Post::withTrashed()->where('id',$id)->firstOrFail();
+
+        if ($post->trashed()) {
+            Storage::delete($post->image);
+            $post->forceDelete();
+        } else {
+            $post->delete();
+        }
+        session()->flash('success','Post deleted successfully');
+        return redirect(route('posts.index'));
+    }
+
+       /**
+     * Return trashed posts from storage.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function trash()
+    {
+        $trashed=Post::onlyTrashed()->get();
+        return view('posts.index')->with('posts',$trashed);
+    }
+
+    public function restore($id)
+    {
+        $post=Post::withTrashed()->where('id',$id)->firstOrFail();
+        $post->restore();
+        session()->flash('success','Post restored successfully');
+        return redirect()->back();
     }
 }
